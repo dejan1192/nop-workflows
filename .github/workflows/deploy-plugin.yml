@@ -44,21 +44,24 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ vars.SSH_PORT }} ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2411 94.130.57.73 >> ~/.ssh/known_hosts
 
       - name: Deploy to server
         run: |
           PLUGIN_NAME="${{ inputs.plugin_name }}"
           PLUGIN_SRC="nopcommerce/src/Presentation/Nop.Web/Plugins/$PLUGIN_NAME"
-          REMOTE_LIVE="${{ vars.REMOTE_NOP_ROOT }}/Plugins/$PLUGIN_NAME"
+          REMOTE="root@94.130.57.73"
+          PORT="2411"
+          NOP_ROOT="/var/www/nopCommerce"
+          REMOTE_LIVE="$NOP_ROOT/Plugins/$PLUGIN_NAME"
           RELEASE_ID=$(date +%Y%m%d_%H%M%S)
-          STAGING="${{ vars.REMOTE_NOP_ROOT }}/_plugin_releases/$PLUGIN_NAME/$RELEASE_ID"
-          BACKUP="${{ vars.REMOTE_NOP_ROOT }}/_plugin_backups/$PLUGIN_NAME/$RELEASE_ID"
+          STAGING="$NOP_ROOT/_plugin_releases/$PLUGIN_NAME/$RELEASE_ID"
+          BACKUP="$NOP_ROOT/_plugin_backups/$PLUGIN_NAME/$RELEASE_ID"
 
-          ssh -p ${{ vars.SSH_PORT }} ${{ vars.SSH_HOST }} "mkdir -p $(dirname $STAGING) $(dirname $BACKUP)"
-          scp -P ${{ vars.SSH_PORT }} -r $PLUGIN_SRC ${{ vars.SSH_HOST }}:$STAGING
+          ssh -p $PORT $REMOTE "mkdir -p $(dirname $STAGING) $(dirname $BACKUP)"
+          scp -P $PORT -r $PLUGIN_SRC $REMOTE:$STAGING
 
-          ssh -p ${{ vars.SSH_PORT }} ${{ vars.SSH_HOST }} "
+          ssh -p $PORT $REMOTE "
             set -euo pipefail
             [ -d '$REMOTE_LIVE' ] && mv '$REMOTE_LIVE' '$BACKUP'
             mv '$STAGING' '$REMOTE_LIVE'
